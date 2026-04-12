@@ -1,0 +1,17 @@
+# Go
+scanner/kestrel-scanner
+scanner/kestrel
+*.exe
+
+# Next.js
+frontend/.next/
+frontend/node_modules/
+frontend/out/
+frontend/.env.local
+
+# General
+.env
+.DS_Store
+*.log
+dist/
+bin/
