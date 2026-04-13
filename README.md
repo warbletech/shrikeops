@@ -1,8 +1,12 @@
-# KestrelOps 🦅
+# ShrikeOps 🐦
 
-> Kubernetes helm safety gate — scan before you deploy.
+> The Kubernetes security scanner that catches bugs and impales them on thorns.
 
-KestrelOps is a self-hostable, open-source Kubernetes manifest & Helm chart analyser that combines best-in-class tools into a single score.
+**ShrikeOps** is a self-hostable, open-source Kubernetes manifest & Helm chart analyser built by [Warble Cloud](https://warblecloud.com). Like the shrike — a carnivorous songbird that hunts, catches, and impales its prey — ShrikeOps hunts misconfigurations, catches vulnerabilities, and pins them to a scored report before they reach production.
+
+Part of the **Warble Cloud** platform · [warblecloud.com/shrikeops](https://warblecloud.com/kestrel)
+
+---
 
 ## What it scans
 
@@ -15,7 +19,9 @@ KestrelOps is a self-hostable, open-source Kubernetes manifest & Helm chart anal
 | **OPA Rego Policies** | Custom org security policies | Apache-2.0 |
 | **OSV.dev VulnDB** | CVEs for container dependencies | Apache-2.0 |
 
-## KestrelOps Score
+---
+
+## ShrikeOps Score
 
 ```
 Overall Score = Security (40%) + API Stability (20%) + Reliability (25%) + Lint (15%)
@@ -23,10 +29,12 @@ Overall Score = Security (40%) + API Stability (20%) + Reliability (25%) + Lint 
 
 Grades: **A** ≥90 · **B** ≥75 · **C** ≥60 · **D** ≥45 · **F** <45
 
+---
+
 ## Project Structure
 
 ```
-kestrelops/
+shrikeops/
 ├── scanner/        # Go — scan engine (Pluto, Polaris, kube-score, YAML lint)
 │   ├── cmd/        # main entrypoint + HTTP server (Gin)
 │   └── internal/
@@ -38,6 +46,8 @@ kestrelops/
 ├── policies/       # OPA Rego policy bundles
 └── .github/        # CI workflows
 ```
+
+---
 
 ## Quick Start
 
@@ -66,18 +76,22 @@ curl -X POST http://localhost:8090/scan \
 ### Docker
 
 ```bash
-docker build -t kestrelops-scanner ./scanner
-docker run -p 8090:8090 kestrelops-scanner
+docker build -t shrikeops-scanner ./scanner
+docker run -p 8090:8090 shrikeops-scanner
 ```
+
+---
 
 ## Roadmap
 
-- [ ] CLI tool: `kestrel scan ./chart`
+- [ ] CLI tool: `shrikeops scan ./chart`
 - [ ] GitHub App — scan PRs automatically
 - [ ] Helm chart upload via UI
 - [ ] Git webhook integration
 - [ ] Multi-cluster score history
 - [ ] Slack / PagerDuty alerts on score drop
+
+---
 
 ## License
 
