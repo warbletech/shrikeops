@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/warbletech/kestrelops/scanner/internal/report"
+	"github.com/warbletech/shrikeops/scanner/internal/report"
 	"gopkg.in/yaml.v3"
 )
 
@@ -256,7 +256,7 @@ func runKubeScore(content string) []report.Finding {
 	return findings
 }
 
-// computeScore calculates the weighted KestrelOps score
+// computeScore calculates the weighted ShrikeOps score
 func computeScore(findings []report.Finding) report.ScoreBreakdown {
 	penaltyBySeverity := map[report.Severity]float64{
 		report.SeverityCritical: 25,

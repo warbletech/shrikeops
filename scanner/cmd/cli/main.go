@@ -7,8 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/warbletech/kestrelops/scanner/internal/engine"
-	"github.com/warbletech/kestrelops/scanner/internal/report"
+	"github.com/warbletech/shrikeops/scanner/internal/engine"
+	"github.com/warbletech/shrikeops/scanner/internal/report"
 )
 
 const version = "0.1.0"
@@ -33,7 +33,7 @@ func main() {
 		os.Exit(0)
 	}
 	if args[0] == "version" {
-		fmt.Printf("kestrel version %s\n", version)
+		fmt.Printf("shrike version %s\n", version)
 		os.Exit(0)
 	}
 	if args[0] != "scan" {
@@ -45,7 +45,7 @@ func main() {
 	// scan command
 	scanArgs := args[1:]
 	if len(scanArgs) == 0 {
-		fmt.Fprintln(os.Stderr, "usage: kestrel scan <file|-> [--json]")
+		fmt.Fprintln(os.Stderr, "usage: shrike scan <file|-> [--json]")
 		os.Exit(1)
 	}
 
@@ -99,7 +99,7 @@ func main() {
 func printHuman(r *report.ScanReport) {
 	grade := r.Score.Grade
 	gradeColor := colorForGrade(grade)
-	fmt.Printf("\n%s KestrelOps Scan — %s%s\n", bold("📋"), r.Source, reset())
+	fmt.Printf("\n%s ShrikeOps Scan — %s%s\n", bold("📋"), r.Source, reset())
 	fmt.Printf("  Scan ID : %s\n", r.ScanID)
 	fmt.Printf("  Score   : %s%.1f/100 (%s)%s\n", gradeColor, r.Score.Overall, grade, reset())
 	fmt.Printf("  Security     : %.1f   API Stability: %.1f\n", r.Score.Security, r.Score.APIStability)
@@ -162,7 +162,7 @@ func reset() string          { return "\033[0m" }
 
 func printHelp() {
 	fmt.Print(`
-Usage: kestrel <command> [flags]
+usage: shrike <command> [flags]
 
 Commands:
   scan <file|->   Scan a Kubernetes manifest or Helm chart
@@ -174,8 +174,8 @@ Flags:
   --help, -h      Show this help
 
 Examples:
-  kestrel scan ./manifests/deployment.yaml
-  helm template ./my-chart | kestrel scan -
-  kestrel scan ./chart --json | jq .score
+  shrike scan ./manifests/deployment.yaml
+  helm template ./my-chart | shrike scan -
+  shrike scan ./chart --json | jq .score
 `)
 }

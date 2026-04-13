@@ -46,7 +46,7 @@ type ScoreBreakdown struct {
 	Grade       string  `json:"grade"` // A/B/C/D/F
 }
 
-// ScanReport is the full output of a KestrelOps scan
+// ScanReport is the full output of a ShrikeOps Scan
 type ScanReport struct {
 	ScanID    string         `json:"scan_id"`
 	CreatedAt string         `json:"created_at"`

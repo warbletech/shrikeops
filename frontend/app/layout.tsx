@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "KestrelOps — Kubernetes Helm Safety Gate",
+  title: "ShrikeOps — Kubernetes Helm Safety Gate",
   description: "Scan Kubernetes manifests and Helm charts for security, deprecated APIs, reliability issues and CVEs before you deploy.",
 };
 
