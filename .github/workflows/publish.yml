@@ -76,6 +76,7 @@ jobs:
           generate_release_notes: true
 
       - name: Dispatch Homebrew tap update with SHA256s
+        continue-on-error: true
         env:
           VERSION: ${{ inputs.version || github.ref_name }}
           TAP_TOKEN: ${{ secrets.TAP_REPO_TOKEN }}
@@ -122,7 +123,7 @@ jobs:
 
       - uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./scanner
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
