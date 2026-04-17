@@ -11,17 +11,12 @@ on:
         required: true
         type: string
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-
 permissions:
-  contents: read
+  contents: write
   packages: write
-  id-token: write
 
 jobs:
-  build-and-publish:
+  build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -43,65 +38,89 @@ jobs:
             suffix: windows-amd64.exe
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
+          go-version: '1.22'
 
-      - name: Build CLI binary
+      - name: Build
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
-          VERSION: ${{ github.ref_name || inputs.version }}
+          VERSION: ${{ inputs.version || github.ref_name }}
         run: |
           cd scanner
-          go build -ldflags "-X main.version=$VERSION -X main.commit=${{ github.sha }}" -o shrikeops-${{ matrix.suffix }} ./cmd/cli/main.go
+          go build -ldflags "-X main.version=$VERSION -X main.commit=${{ github.sha }}" \
+            -o shrikeops-${{ matrix.suffix }} ./cmd/cli/main.go
 
-      - name: Upload binary to GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: scanner/shrikeops-*
-          generate_release_notes: true
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: shrikeops-${{ matrix.suffix }}
           path: scanner/shrikeops-${{ matrix.suffix }}
 
-  docker-image:
+  release:
+    needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+      - uses: actions/download-artifact@v4
         with:
-          registry: ${{ env.REGISTRY }}
+          pattern: shrikeops-*
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.version || github.ref_name }}
+          files: shrikeops-*
+          generate_release_notes: true
+
+      - name: Dispatch Homebrew tap update with SHA256s
+        env:
+          VERSION: ${{ inputs.version || github.ref_name }}
+          TAP_TOKEN: ${{ secrets.TAP_REPO_TOKEN }}
+        run: |
+          linux_amd64=$(sha256sum shrikeops-linux-amd64 | awk '{print $1}')
+          linux_arm64=$(sha256sum shrikeops-linux-arm64 | awk '{print $1}')
+          darwin_amd64=$(sha256sum shrikeops-darwin-amd64 | awk '{print $1}')
+          darwin_arm64=$(sha256sum shrikeops-darwin-arm64 | awk '{print $1}')
+
+          curl -fsSL -X POST \
+            -H "Authorization: Bearer $TAP_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/warbletech/homebrew-tap/dispatches \
+            -d "{\"event_type\":\"release-published\",\"client_payload\":{
+              \"version\":\"$VERSION\",
+              \"linux_amd64_sha\":\"$linux_amd64\",
+              \"linux_arm64_sha\":\"$linux_arm64\",
+              \"darwin_amd64_sha\":\"$darwin_amd64\",
+              \"darwin_arm64_sha\":\"$darwin_arm64\"
+            }}"
+
+  docker:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata
-        id: meta
+      - id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ghcr.io/${{ github.repository }}
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix=,suffix=,enable=${{ github.event_name == 'push' }}
-            type=raw,value=latest,enable=${{ github.event_name == 'push' }}
+            type=raw,value=latest
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+      - uses: docker/build-push-action@v5
         with:
           context: .
           push: true
@@ -109,11 +128,3 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Trigger Homebrew tap formula update
-        uses: peter-evans/repository-dispatch@v3
-        with:
-          token: ${{ secrets.TAP_REPO_TOKEN }}
-          repository: warbletech/homebrew-tap
-          event-type: release-published
-          client-payload: '{"version": "${{ github.ref_name }}"}'
