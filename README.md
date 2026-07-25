@@ -1,8 +1,14 @@
 # ShrikeOps 🐦
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/warble-tech/warble-army/main/brand/shrike-ops/shrike-ops-logo.jpg" alt="ShrikeOps" width="120" />
+</p>
+
 > The Kubernetes security scanner that catches bugs and impales them on thorns.
 
-**ShrikeOps** is a self-hostable, open-source Kubernetes manifest & Helm chart analyser built by [Warble Cloud](https://warblecloud.com). Like the shrike — a carnivorous songbird that hunts, catches, and impales its prey — ShrikeOps hunts misconfigurations, catches vulnerabilities, and pins them to a scored report before they reach production.
+**ShrikeOps** is a self-hostable, open-source Kubernetes manifest & Helm chart analyser built by [Warble Cloud](https://warblecloud.com) / the [Warble Army](https://github.com/warble-tech/warble-army) flock. Like the shrike — a carnivorous songbird that hunts, catches, and impales its prey — ShrikeOps hunts misconfigurations, catches vulnerabilities, and pins them to a scored report before they reach production.
+
+Community Edition home (planned): **[warbleoss.org](https://warbleoss.org)** · Pairs with **Heron Ops** (cluster MCP) and **Starling Lite**.
 
 [![Release](https://img.shields.io/github/v/release/warbletech/shrikeops)](https://github.com/warbletech/shrikeops/releases)
 [![Go Report Card](https://goreportcard.com/badge/github.com/warbletech/shrikeops)](https://goreportcard.com/report/github.com/warbletech/shrikeops)
