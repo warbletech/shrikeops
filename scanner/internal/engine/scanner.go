@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/warbletech/shrikeops/scanner/internal/report"
+	"github.com/warble-tech/shrikeops/scanner/internal/report"
 	"gopkg.in/yaml.v3"
 )
 

@@ -1,4 +1,4 @@
-package kestrelops.security
+package shrikeops.security
 
 # METADATA
 # title: Deny privileged containers

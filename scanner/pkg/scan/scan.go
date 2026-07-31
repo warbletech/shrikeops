@@ -2,8 +2,8 @@
 package scan
 
 import (
-	"github.com/warbletech/shrikeops/scanner/internal/engine"
-	"github.com/warbletech/shrikeops/scanner/internal/report"
+	"github.com/warble-tech/shrikeops/scanner/internal/engine"
+	"github.com/warble-tech/shrikeops/scanner/internal/report"
 )
 
 // Finding is a single scan result.

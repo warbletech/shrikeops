@@ -1,4 +1,4 @@
-module github.com/warbletech/shrikeops/scanner
+module github.com/warble-tech/shrikeops/scanner
 
 go 1.22
 

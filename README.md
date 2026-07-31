@@ -10,11 +10,11 @@
 
 Community Edition home (planned): **[warbleoss.org](https://warbleoss.org)** · Pairs with **Heron Ops** (cluster MCP) and **Starling Lite**.
 
-[![Release](https://img.shields.io/github/v/release/warbletech/shrikeops)](https://github.com/warbletech/shrikeops/releases)
-[![Go Report Card](https://goreportcard.com/badge/github.com/warbletech/shrikeops)](https://goreportcard.com/report/github.com/warbletech/shrikeops)
+[![Release](https://img.shields.io/github/v/release/warble-tech/shrikeops)](https://github.com/warble-tech/shrikeops/releases)
+[![Go Report Card](https://goreportcard.com/badge/github.com/warble-tech/shrikeops)](https://goreportcard.com/report/github.com/warble-tech/shrikeops)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
-Part of the **Warble Cloud** platform · [warblecloud.com](https://warblecloud.com)
+Part of **Warble OSS** ([warbleoss.org](https://warbleoss.org)) and the Warble Cloud product family · [warblecloud.com](https://warblecloud.com)
 
 ---
 
@@ -65,7 +65,7 @@ shrikeops/
 
 ```bash
 # Add WarbleTech tap
-brew tap warbletech/tap
+brew tap warble-tech/tap
 
 # Install ShrikeOps
 brew install shrikeops
@@ -76,7 +76,7 @@ brew upgrade shrikeops
 
 ### GitHub Releases (All Platforms)
 
-Download pre-built binaries from [GitHub Releases](https://github.com/warbletech/shrikeops/releases):
+Download pre-built binaries from [GitHub Releases](https://github.com/warble-tech/shrikeops/releases):
 
 | Platform | Binary |
 |----------|--------|
@@ -88,7 +88,7 @@ Download pre-built binaries from [GitHub Releases](https://github.com/warbletech
 
 ```bash
 # Example: macOS Intel
-curl -L https://github.com/warbletech/shrikeops/releases/latest/download/shrikeops-darwin-amd64 -o shrikeops
+curl -L https://github.com/warble-tech/shrikeops/releases/latest/download/shrikeops-darwin-amd64 -o shrikeops
 chmod +x shrikeops
 sudo mv shrikeops /usr/local/bin/
 ```
@@ -96,7 +96,7 @@ sudo mv shrikeops /usr/local/bin/
 ### Docker / GitHub Container Registry
 
 ```bash
-docker pull ghcr.io/warbletech/shrikeops:latest
+docker pull ghcr.io/warble-tech/shrikeops:latest
 ```
 
 ---
@@ -141,7 +141,7 @@ curl -X POST http://localhost:8090/scan \
 ### Docker
 
 ```bash
-docker run -p 8090:8090 ghcr.io/warbletech/shrikeops:latest server
+docker run -p 8090:8090 ghcr.io/warble-tech/shrikeops:latest server
 ```
 
 ---
@@ -149,8 +149,8 @@ docker run -p 8090:8090 ghcr.io/warbletech/shrikeops:latest server
 ## Roadmap
 
 - [x] CLI tool: `shrikeops scan ./chart` ✓ Released v0.1.0
-- [x] Homebrew tap installation ✓ Available via `brew tap warbletech/tap`
-- [x] GitHub Container Registry publishing ✓ `ghcr.io/warbletech/shrikeops`
+- [x] Homebrew tap installation ✓ Available via `brew tap warble-tech/tap`
+- [x] GitHub Container Registry publishing ✓ `ghcr.io/warble-tech/shrikeops`
 - [ ] GitHub App — scan PRs automatically
 - [ ] Helm chart upload via UI
 - [ ] Git webhook integration

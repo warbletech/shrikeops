@@ -3,7 +3,7 @@ WORKDIR /app
 COPY go.mod go.sum* ./
 RUN go mod download
 COPY . .
-RUN go build -o kestrel-scanner ./cmd/main.go
+RUN go build -o shrikeops-scanner ./cmd/main.go
 
 FROM alpine:3.19
 RUN apk add --no-cache ca-certificates curl tar
@@ -26,7 +26,7 @@ RUN curl -fL -o /tmp/kube-score.tar.gz \
     && tar -xz -C /usr/local/bin -f /tmp/kube-score.tar.gz kube-score \
     && rm /tmp/kube-score.tar.gz
 
-COPY --from=builder /app/kestrel-scanner /usr/local/bin/kestrel-scanner
+COPY --from=builder /app/shrikeops-scanner /usr/local/bin/shrikeops-scanner
 
 EXPOSE 8090
-ENTRYPOINT ["kestrel-scanner"]
+ENTRYPOINT ["shrikeops-scanner"]
