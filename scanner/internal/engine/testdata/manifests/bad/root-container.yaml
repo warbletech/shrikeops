@@ -1,0 +1,34 @@
+# ⚠️  INTENTIONALLY MISCONFIGURED — for ShrikeOps demo
+# Expected scan result: score ~38, grade F
+# Findings: runAsRoot (CRITICAL), no resource limits (HIGH),
+#           no liveness probe (HIGH), latest image tag (HIGH),
+#           no readOnlyRootFilesystem (MEDIUM)
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: insecure-api
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: insecure-api
+  template:
+    metadata:
+      labels:
+        app: insecure-api
+    spec:
+      containers:
+        - name: api
+          image: myapp:latest          # HIGH: mutable tag, no digest pinning
+          ports:
+            - containerPort: 8080
+          # HIGH: no resource requests or limits
+          # HIGH: no liveness or readiness probes
+          securityContext:
+            runAsUser: 0               # CRITICAL: running as root
+            allowPrivilegeEscalation: true  # CRITICAL: privilege escalation allowed
+          env:
+            - name: DB_PASSWORD
+              value: "supersecret123"  # HIGH: hardcoded secret in env

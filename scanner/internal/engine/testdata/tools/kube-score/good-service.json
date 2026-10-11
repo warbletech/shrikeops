@@ -1,0 +1,76 @@
+[
+    {
+        "object_name": "Service/v1/production/api-server",
+        "type_meta": {
+            "kind": "Service",
+            "apiVersion": "v1"
+        },
+        "object_meta": {
+            "name": "api-server",
+            "namespace": "production",
+            "creationTimestamp": null,
+            "labels": {
+                "app": "api-server",
+                "team": "platform"
+            }
+        },
+        "checks": [
+            {
+                "check": {
+                    "name": "Stable version",
+                    "id": "stable-version",
+                    "target_type": "all",
+                    "comment": "Checks if the object is using a deprecated apiVersion",
+                    "optional": false
+                },
+                "grade": 10,
+                "skipped": false,
+                "comments": null
+            },
+            {
+                "check": {
+                    "name": "Label values",
+                    "id": "label-values",
+                    "target_type": "all",
+                    "comment": "Validates label values",
+                    "optional": false
+                },
+                "grade": 10,
+                "skipped": false,
+                "comments": null
+            },
+            {
+                "check": {
+                    "name": "Service Targets Pod",
+                    "id": "service-targets-pod",
+                    "target_type": "Service",
+                    "comment": "Makes sure that all Services targets a Pod",
+                    "optional": false
+                },
+                "grade": 1,
+                "skipped": false,
+                "comments": [
+                    {
+                        "path": "",
+                        "summary": "The services selector does not match any pods",
+                        "description": ""
+                    }
+                ]
+            },
+            {
+                "check": {
+                    "name": "Service Type",
+                    "id": "service-type",
+                    "target_type": "Service",
+                    "comment": "Makes sure that the Service type is not NodePort",
+                    "optional": false
+                },
+                "grade": 10,
+                "skipped": false,
+                "comments": null
+            }
+        ],
+        "file_name": "STDIN",
+        "file_row": 1
+    }
+]

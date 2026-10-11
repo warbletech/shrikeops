@@ -1,0 +1,24 @@
+{
+  "PolarisOutputVersion": "1.0",
+  "SourceType": "Path",
+  "SourceName": "testdata/manifests/good/service.yaml",
+  "DisplayName": "testdata/manifests/good/service.yaml",
+  "ClusterInfo": {
+    "Version": "unknown",
+    "Nodes": 0,
+    "Pods": 0,
+    "Namespaces": 0,
+    "Controllers": 0
+  },
+  "Results": [
+    {
+      "Name": "api-server",
+      "Namespace": "production",
+      "Kind": "Service",
+      "Results": {},
+      "PodResult": null,
+      "CreatedTime": "0001-01-01T00:00:00Z"
+    }
+  ],
+  "Score": 100
+}

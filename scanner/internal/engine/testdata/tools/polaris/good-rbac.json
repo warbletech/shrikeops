@@ -1,0 +1,87 @@
+{
+  "PolarisOutputVersion": "1.0",
+  "SourceType": "Path",
+  "SourceName": "testdata/manifests/good/rbac.yaml",
+  "DisplayName": "testdata/manifests/good/rbac.yaml",
+  "ClusterInfo": {
+    "Version": "unknown",
+    "Nodes": 0,
+    "Pods": 0,
+    "Namespaces": 0,
+    "Controllers": 0
+  },
+  "Results": [
+    {
+      "Name": "api-server-sa",
+      "Namespace": "production",
+      "Kind": "ServiceAccount",
+      "Results": {},
+      "PodResult": null,
+      "CreatedTime": "0001-01-01T00:00:00Z"
+    },
+    {
+      "Name": "api-server-role",
+      "Namespace": "production",
+      "Kind": "Role",
+      "Results": {
+        "rolePodExecAttach": {
+          "ID": "rolePodExecAttach",
+          "Message": "The Role does not allow pods/exec or pods/attach",
+          "Details": null,
+          "Success": true,
+          "Severity": "danger",
+          "Category": "Security",
+          "Mutations": null
+        }
+      },
+      "PodResult": null,
+      "CreatedTime": "0001-01-01T00:00:00Z"
+    },
+    {
+      "Name": "api-server-rolebinding",
+      "Namespace": "production",
+      "Kind": "RoleBinding",
+      "Results": {
+        "rolebindingClusterAdminClusterRole": {
+          "ID": "rolebindingClusterAdminClusterRole",
+          "Message": "The RoleBinding does not reference the default cluster-admin ClusterRole or one with wildcard permissions",
+          "Details": null,
+          "Success": true,
+          "Severity": "danger",
+          "Category": "Security",
+          "Mutations": null
+        },
+        "rolebindingClusterAdminRole": {
+          "ID": "rolebindingClusterAdminRole",
+          "Message": "The RoleBinding does not reference a Role with wildcard permissions",
+          "Details": null,
+          "Success": true,
+          "Severity": "danger",
+          "Category": "Security",
+          "Mutations": null
+        },
+        "rolebindingClusterRolePodExecAttach": {
+          "ID": "rolebindingClusterRolePodExecAttach",
+          "Message": "The RoleBinding does not reference a ClusterRole allowing pods/exec or pods/attach",
+          "Details": null,
+          "Success": true,
+          "Severity": "danger",
+          "Category": "Security",
+          "Mutations": null
+        },
+        "rolebindingRolePodExecAttach": {
+          "ID": "rolebindingRolePodExecAttach",
+          "Message": "The RoleBinding does not reference a Role allowing Pod exec or attach",
+          "Details": null,
+          "Success": true,
+          "Severity": "danger",
+          "Category": "Security",
+          "Mutations": null
+        }
+      },
+      "PodResult": null,
+      "CreatedTime": "0001-01-01T00:00:00Z"
+    }
+  ],
+  "Score": 100
+}
