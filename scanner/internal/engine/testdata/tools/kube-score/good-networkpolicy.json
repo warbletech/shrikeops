@@ -1,0 +1,60 @@
+[
+    {
+        "object_name": "NetworkPolicy/networking.k8s.io/v1/production/api-server-netpol",
+        "type_meta": {
+            "kind": "NetworkPolicy",
+            "apiVersion": "networking.k8s.io/v1"
+        },
+        "object_meta": {
+            "name": "api-server-netpol",
+            "namespace": "production",
+            "creationTimestamp": null
+        },
+        "checks": [
+            {
+                "check": {
+                    "name": "Stable version",
+                    "id": "stable-version",
+                    "target_type": "all",
+                    "comment": "Checks if the object is using a deprecated apiVersion",
+                    "optional": false
+                },
+                "grade": 10,
+                "skipped": false,
+                "comments": null
+            },
+            {
+                "check": {
+                    "name": "Label values",
+                    "id": "label-values",
+                    "target_type": "all",
+                    "comment": "Validates label values",
+                    "optional": false
+                },
+                "grade": 10,
+                "skipped": false,
+                "comments": null
+            },
+            {
+                "check": {
+                    "name": "NetworkPolicy targets Pod",
+                    "id": "networkpolicy-targets-pod",
+                    "target_type": "NetworkPolicy",
+                    "comment": "Makes sure that all NetworkPolicies targets at least one Pod",
+                    "optional": false
+                },
+                "grade": 1,
+                "skipped": false,
+                "comments": [
+                    {
+                        "path": "",
+                        "summary": "The NetworkPolicys selector doesn't match any pods",
+                        "description": ""
+                    }
+                ]
+            }
+        ],
+        "file_name": "STDIN",
+        "file_row": 1
+    }
+]

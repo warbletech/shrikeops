@@ -1,0 +1,30 @@
+# ⚠️  INTENTIONALLY MISCONFIGURED — for ShrikeOps demo
+# Expected scan result: score ~22, grade F
+# Findings: privileged container (CRITICAL), hostNetwork (CRITICAL),
+#           hostPID (CRITICAL), hostPath volume (CRITICAL),
+#           no resource limits (HIGH), no probes (HIGH)
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: privileged-debug
+  namespace: default
+spec:
+  hostNetwork: true    # CRITICAL: bypasses network isolation
+  hostPID: true        # CRITICAL: can see all host processes
+  hostIPC: true        # CRITICAL: shared IPC namespace with host
+  containers:
+    - name: debug
+      image: ubuntu:latest
+      command: ["/bin/bash", "-c", "sleep infinity"]
+      securityContext:
+        privileged: true           # CRITICAL: full host access
+        runAsUser: 0               # CRITICAL: root
+        allowPrivilegeEscalation: true
+      volumeMounts:
+        - name: host-root
+          mountPath: /host
+  volumes:
+    - name: host-root
+      hostPath:
+        path: /                    # CRITICAL: mounts entire host filesystem

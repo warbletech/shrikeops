@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -25,9 +24,4 @@ func HandleScan(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, result)
-}
-
-// parseJSON is a small helper used by scanner sub-checks
-func parseJSON(data []byte, v any) error {
-	return json.Unmarshal(data, v)
 }
