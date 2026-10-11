@@ -2,94 +2,72 @@ name: ShrikeOps Scan
 
 on:
   pull_request:
-    paths:
-      - '**/*.yaml'
-      - '**/*.yml'
-      - '**/Chart.yaml'
-      - '**/templates/**'
   push:
     branches: [main, master]
 
+# Keep in sync with scanner/Dockerfile and README "Requirements".
+env:
+  PLUTO_VERSION: "5.24.4"
+  POLARIS_VERSION: "10.2.5"
+  KUBE_SCORE_VERSION: "1.20.0"
+
 jobs:
   build-scanner:
-    name: Build Scanner
+    name: Build, vet & test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
-          cache-dependency-path: scanner/go.sum
-
-      - name: Build scanner binary
-        run: go build -o shrike-scanner ./cmd/main.go
-        working-directory: scanner
-
-      - name: Build CLI binary
-        run: go build -o shrike ./cmd/cli/main.go
-        working-directory: scanner
-
-      - name: Run Go tests
-        run: go test ./...
-        working-directory: scanner
-
-  install-tools:
-    name: Install Scan Tools
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install pluto
-        run: |
-          curl -sSL https://github.com/FairwindsOps/pluto/releases/latest/download/pluto_linux_amd64.tar.gz \
-            | tar -xz -C /usr/local/bin pluto
-          pluto version
-
-      - name: Install polaris
-        run: |
-          curl -sSL https://github.com/FairwindsOps/polaris/releases/latest/download/polaris_linux_amd64.tar.gz \
-            | tar -xz -C /usr/local/bin polaris
-          polaris version
-
-      - name: Install kube-score
-        run: |
-          curl -sSL https://github.com/zegl/kube-score/releases/latest/download/kube-score_linux_amd64.tar.gz \
-            | tar -xz -C /usr/local/bin kube-score
-          kube-score version
-
-  scan-examples:
-    name: Scan Example Manifests
-    runs-on: ubuntu-latest
-    needs: [build-scanner, install-tools]
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-go@v5
-        with:
-          go-version: '1.22'
+          go-version-file: scanner/go.mod
           cache-dependency-path: scanner/go.sum
 
       - name: Install scan tools
         run: |
-          curl -sSL https://github.com/FairwindsOps/pluto/releases/latest/download/pluto_linux_amd64.tar.gz | tar -xz -C /usr/local/bin pluto
-          curl -sSL https://github.com/FairwindsOps/polaris/releases/latest/download/polaris_linux_amd64.tar.gz | tar -xz -C /usr/local/bin polaris
-          curl -sSL https://github.com/zegl/kube-score/releases/latest/download/kube-score_linux_amd64.tar.gz | tar -xz -C /usr/local/bin kube-score
+          set -euo pipefail
+          curl -fsSL "https://github.com/FairwindsOps/pluto/releases/download/v${PLUTO_VERSION}/pluto_${PLUTO_VERSION}_linux_amd64.tar.gz" \
+            | sudo tar -xz -C /usr/local/bin pluto
+          curl -fsSL "https://github.com/FairwindsOps/polaris/releases/download/v${POLARIS_VERSION}/polaris_${POLARIS_VERSION}_linux_amd64.tar.gz" \
+            | sudo tar -xz -C /usr/local/bin polaris
+          curl -fsSL "https://github.com/zegl/kube-score/releases/download/v${KUBE_SCORE_VERSION}/kube-score_${KUBE_SCORE_VERSION}_linux_amd64.tar.gz" \
+            | sudo tar -xz -C /usr/local/bin kube-score
+          pluto version && polaris version && kube-score version
 
-      - name: Build CLI
-        run: go build -o shrike ./cmd/cli/main.go
+      - name: Build
         working-directory: scanner
-
-      - name: Scan example manifests
         run: |
-          if [ -d examples ]; then
-            for f in examples/*.yaml; do
-              echo "Scanning $f..."
-              ./scanner/shrike scan "$f" || true
-            done
-          else
-            echo "No examples directory — skipping manifest scan"
-          fi
+          go build ./...
+          go build -o shrikeops ./cmd/cli
+
+      - name: Vet
+        working-directory: scanner
+        run: go vet ./...
+
+      # With the tools on PATH, TestRunRealToolsIfInstalled also runs against the real binaries.
+      - name: Test
+        working-directory: scanner
+        run: go test -count=1 ./...
+
+      - name: Scan fixtures (good must pass, bad must be flagged)
+        run: |
+          set -uo pipefail
+          mkdir -p scan-results
+          fail=0
+          for f in scanner/internal/engine/testdata/manifests/good/*.yaml scanner/internal/engine/testdata/manifests/bad/*.yaml; do
+            name="$(basename "$(dirname "$f")")-$(basename "$f" .yaml)"
+            rc=0
+            ./scanner/shrikeops scan "$f" --json > "scan-results/$name.json" || rc=$?
+            grade=$(jq -r .score.grade "scan-results/$name.json")
+            overall=$(jq -r .score.overall "scan-results/$name.json")
+            echo "$name: $overall ($grade) exit=$rc"
+            case "$f" in
+              */good/*) [ "$rc" -eq 0 ] || { echo "::error file=$f::good fixture exited $rc"; fail=1; } ;;
+              */bad/*)  [ "$rc" -eq 2 ] || { echo "::error file=$f::bad fixture exited $rc (expected 2)"; fail=1; } ;;
+            esac
+            [ "$grade" != "N/A" ] || { echo "::error file=$f::incomplete scan in CI"; fail=1; }
+          done
+          exit $fail
 
       - name: Upload scan results
         if: always()
