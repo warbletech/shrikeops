@@ -56,8 +56,8 @@ jobs:
           fail=0
           for f in scanner/internal/engine/testdata/manifests/good/*.yaml scanner/internal/engine/testdata/manifests/bad/*.yaml; do
             name="$(basename "$(dirname "$f")")-$(basename "$f" .yaml)"
-            ./scanner/shrikeops scan "$f" --json > "scan-results/$name.json"
-            rc=$?
+            rc=0
+            ./scanner/shrikeops scan "$f" --json > "scan-results/$name.json" || rc=$?
             grade=$(jq -r .score.grade "scan-results/$name.json")
             overall=$(jq -r .score.overall "scan-results/$name.json")
             echo "$name: $overall ($grade) exit=$rc"
