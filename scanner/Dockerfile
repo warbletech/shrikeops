@@ -3,30 +3,28 @@ WORKDIR /app
 COPY go.mod go.sum* ./
 RUN go mod download
 COPY . .
-RUN go build -o shrikeops-scanner ./cmd/main.go
+RUN CGO_ENABLED=0 go build -o shrikeops-scanner ./cmd/main.go \
+ && CGO_ENABLED=0 go build -o shrikeops ./cmd/cli
 
 FROM alpine:3.19
-RUN apk add --no-cache ca-certificates curl tar
-
-# Install pluto (pinned v5.19.4)
-RUN curl -fL -o /tmp/pluto.tar.gz \
-    "https://github.com/FairwindsOps/pluto/releases/download/v5.19.4/pluto_5.19.4_linux_amd64.tar.gz" \
-    && tar -xz -C /usr/local/bin -f /tmp/pluto.tar.gz pluto \
-    && rm /tmp/pluto.tar.gz
-
-# Install polaris (pinned v9.6.1)
-RUN curl -fL -o /tmp/polaris.tar.gz \
-    "https://github.com/FairwindsOps/polaris/releases/download/9.6.1/polaris_linux_amd64.tar.gz" \
-    && tar -xz -C /usr/local/bin -f /tmp/polaris.tar.gz polaris \
-    && rm /tmp/polaris.tar.gz
-
-# Install kube-score (pinned v1.19.0)
-RUN curl -fL -o /tmp/kube-score.tar.gz \
-    "https://github.com/zegl/kube-score/releases/download/v1.19.0/kube-score_1.19.0_linux_amd64.tar.gz" \
-    && tar -xz -C /usr/local/bin -f /tmp/kube-score.tar.gz kube-score \
-    && rm /tmp/kube-score.tar.gz
+ARG TARGETARCH=amd64
+# Scanner tool versions — keep in sync with README "Requirements" and
+# internal/engine/testdata/README.md (parsers are tested against these outputs).
+ARG PLUTO_VERSION=5.24.4
+ARG POLARIS_VERSION=10.2.5
+ARG KUBE_SCORE_VERSION=1.20.0
+RUN apk add --no-cache ca-certificates curl tar \
+ && curl -fsSL "https://github.com/FairwindsOps/pluto/releases/download/v${PLUTO_VERSION}/pluto_${PLUTO_VERSION}_linux_${TARGETARCH}.tar.gz" \
+    | tar -xz -C /usr/local/bin pluto \
+ && curl -fsSL "https://github.com/FairwindsOps/polaris/releases/download/v${POLARIS_VERSION}/polaris_${POLARIS_VERSION}_linux_${TARGETARCH}.tar.gz" \
+    | tar -xz -C /usr/local/bin polaris \
+ && curl -fsSL "https://github.com/zegl/kube-score/releases/download/v${KUBE_SCORE_VERSION}/kube-score_${KUBE_SCORE_VERSION}_linux_${TARGETARCH}.tar.gz" \
+    | tar -xz -C /usr/local/bin kube-score \
+ && pluto version && polaris version && kube-score version
 
 COPY --from=builder /app/shrikeops-scanner /usr/local/bin/shrikeops-scanner
+# CLI is included too: docker run --entrypoint shrikeops IMAGE scan - < manifest.yaml
+COPY --from=builder /app/shrikeops /usr/local/bin/shrikeops
 
 EXPOSE 8090
 ENTRYPOINT ["shrikeops-scanner"]

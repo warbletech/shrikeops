@@ -39,6 +39,32 @@ Overall Score = Security (40%) + API Stability (20%) + Reliability (25%) + Lint 
 
 Grades: **A** ≥90 · **B** ≥75 · **C** ≥60 · **D** ≥45 · **F** <45
 
+| Category | Source | Severity mapping |
+|---|---|---|
+| Security | Polaris checks in the `Security` category | `danger` → high, `warning` → low |
+| API Stability | Pluto | removed API → high, deprecated API → medium |
+| Reliability | kube-score | `CRITICAL` → medium, `WARNING` → low; **skipped checks are ignored** |
+| Lint | built-in YAML parser | parse error → high |
+
+Penalty per finding: critical 25 · high 15 · medium 7 · low 3 · info 0 (each category is clamped to 0–100).
+
+### Incomplete scans
+
+ShrikeOps never scores a check that did not run. If `pluto`, `polaris` or `kube-score` is missing from `PATH`
+(or fails / returns unparseable output):
+
+- the category it feeds is **not scored** (`n/a` in the CLI, `0` in JSON) and the overall score is re-weighted over the checks that did run;
+- `score.complete` is `false`, `score.grade` is `"N/A"` and `score.skipped_checks` lists each tool, the reason and how to install it;
+- the CLI prints a warning to stderr and **exits 3**, so a CI gate cannot silently pass. Use `--allow-incomplete` to exit 0 anyway (the report is still marked incomplete).
+
+```json
+"score": {
+  "security": 0, "api_stability": 100, "reliability": 51, "lint_clean": 100,
+  "overall": 79.6, "grade": "N/A", "complete": false,
+  "skipped_checks": [{"tool": "polaris", "category": "security_policy", "reason": "not found on PATH", "install": "https://github.com/FairwindsOps/polaris/releases ..."}]
+}
+```
+
 ---
 
 ## Project Structure
@@ -58,6 +84,27 @@ shrikeops/
 ```
 
 ---
+
+## Requirements
+
+The `shrikeops` binary orchestrates three external scanners. **All three must be on `PATH`** for a complete (graded) scan:
+
+| Tool | Tested version | Install |
+|---|---|---|
+| [pluto](https://github.com/FairwindsOps/pluto) | 5.24.4 | `brew install FairwindsOps/tap/pluto` or [releases](https://github.com/FairwindsOps/pluto/releases) |
+| [polaris](https://github.com/FairwindsOps/polaris) | 10.2.5 | `brew install FairwindsOps/tap/polaris` or [releases](https://github.com/FairwindsOps/polaris/releases) |
+| [kube-score](https://github.com/zegl/kube-score) | 1.20.0 | `brew install kube-score` or [releases](https://github.com/zegl/kube-score/releases) |
+
+Linux (amd64; use `arm64` on ARM):
+
+```bash
+curl -fsSL https://github.com/FairwindsOps/pluto/releases/download/v5.24.4/pluto_5.24.4_linux_amd64.tar.gz | sudo tar -xz -C /usr/local/bin pluto
+curl -fsSL https://github.com/FairwindsOps/polaris/releases/download/v10.2.5/polaris_10.2.5_linux_amd64.tar.gz | sudo tar -xz -C /usr/local/bin polaris
+curl -fsSL https://github.com/zegl/kube-score/releases/download/v1.20.0/kube-score_1.20.0_linux_amd64.tar.gz | sudo tar -xz -C /usr/local/bin kube-score
+```
+
+The Docker image (`ghcr.io/warble-tech/shrikeops`) already contains all three, plus the `shrikeops` CLI.
+Without them, scans are reported as **incomplete** (see [Incomplete scans](#incomplete-scans)).
 
 ## Installation
 
@@ -106,27 +153,30 @@ docker pull ghcr.io/warble-tech/shrikeops:latest
 ### CLI Usage
 
 ```bash
-# Scan a Kubernetes manifest file
+# Scan a Kubernetes manifest file (multi-document YAML is fine)
 shrikeops scan ./manifests/deployment.yaml
 
-# Scan a Helm chart
-shrikeops scan ./charts/my-app/
+# Scan a Helm chart: render it first, then scan from stdin
+helm template ./charts/my-app | shrikeops scan -
 
-# Scan with output format options
-shrikeops scan ./manifests/ -o json
-shrikeops scan ./manifests/ -o table
+# JSON output (stdout is pure JSON; the banner only goes to an interactive stderr)
+shrikeops scan ./manifests/deployment.yaml --json | jq .score
+
+# Run without the external tools (report is marked incomplete, exit 0)
+shrikeops scan ./manifests/deployment.yaml --allow-incomplete
 ```
+
+Exit codes: `0` ok · `1` usage/I/O error · `2` critical or high findings · `3` scan incomplete (missing/failed tool).
 
 ### Run the Scanner Server Locally
 
 ```bash
 # Install dependencies (if not using pre-built binary)
-brew install helm kube-score
-curl -sSL https://github.com/FairwindsOps/pluto/releases/latest/download/pluto_darwin_amd64.tar.gz | tar xz -C /usr/local/bin
-curl -sSL https://github.com/FairwindsOps/polaris/releases/latest/download/polaris_darwin_amd64.tar.gz | tar xz -C /usr/local/bin
+# Install pluto, polaris and kube-score first (see Requirements)
 
 cd scanner
-go run ./cmd/cli/main.go server
+go run ./cmd/main.go        # HTTP API on :8090 (POST /scan)
+go test ./...             # unit tests (no external tools needed)
 ```
 
 ### API Server Usage
@@ -141,7 +191,10 @@ curl -X POST http://localhost:8090/scan \
 ### Docker
 
 ```bash
-docker run -p 8090:8090 ghcr.io/warble-tech/shrikeops:latest server
+# HTTP scanner API on :8090
+docker run -p 8090:8090 ghcr.io/warble-tech/shrikeops:latest
+# CLI
+docker run -i --rm --entrypoint shrikeops ghcr.io/warble-tech/shrikeops:latest scan - < deployment.yaml
 ```
 
 ---
