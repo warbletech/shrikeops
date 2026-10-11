@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/warble-tech/shrikeops/scanner/internal/engine"
+	"github.com/warbletech/shrikeops/scanner/internal/engine"
 )
 
 func main() {
