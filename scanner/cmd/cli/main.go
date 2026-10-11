@@ -7,8 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/warble-tech/shrikeops/scanner/internal/engine"
-	"github.com/warble-tech/shrikeops/scanner/internal/report"
+	"github.com/warbletech/shrikeops/scanner/internal/engine"
+	"github.com/warbletech/shrikeops/scanner/internal/report"
 )
 
 const version = "0.1.0"
