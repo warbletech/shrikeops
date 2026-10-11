@@ -5,8 +5,8 @@ Thanks for contributing to this Warble OSS component.
 ## Flock home
 
 - Community site: https://warbleoss.org
-- Umbrella repo: https://github.com/warble-tech/warble-army
-- Full guide: https://github.com/warble-tech/warble-army/blob/main/docs/cncf/CONTRIBUTING.md
+- Umbrella repo: https://github.com/warbletech/warble-army
+- Full guide: https://github.com/warbletech/warble-army/blob/main/docs/cncf/CONTRIBUTING.md
 
 ## Pull requests
 
