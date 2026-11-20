@@ -1,0 +1,14 @@
+apiVersion: v2
+name: ShrikeOps-demo-app
+description: Demo application for ShrikeOps Helm scanning
+type: application
+version: 1.0.0
+appVersion: "2.1.0"
+keywords:
+  - demo
+  - ShrikeOps
+  - kubernetes
+maintainers:
+  - name: Warble Cloud
+    email: contact@warblecloud.com
+    url: https://warblecloud.com

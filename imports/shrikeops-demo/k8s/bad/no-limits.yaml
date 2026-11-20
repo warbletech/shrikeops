@@ -1,0 +1,40 @@
+# ⚠️  INTENTIONALLY MISCONFIGURED — for ShrikeOps demo
+# Expected scan result: score ~60, grade C
+# Findings: no resource limits (HIGH x3), no PDB (MEDIUM),
+#           no anti-affinity (MEDIUM), wildcard RBAC (HIGH)
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: resource-hog
+  namespace: default
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: resource-hog
+  template:
+    metadata:
+      labels:
+        app: resource-hog
+    spec:
+      containers:
+        - name: worker
+          image: python:3.11
+          command: ["python", "-c", "while True: pass"]
+          # HIGH: no resource requests — scheduler cannot place pod correctly
+          # HIGH: no resource limits — pod can consume unlimited CPU/memory
+        - name: sidecar
+          image: busybox
+          command: ["sh", "-c", "sleep 9999"]
+          # HIGH: sidecar also has no limits
+---
+# HIGH: ClusterRole with wildcard permissions
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: overprivileged-role
+rules:
+  - apiGroups: ["*"]      # HIGH: all API groups
+    resources: ["*"]      # HIGH: all resources
+    verbs: ["*"]          # HIGH: all verbs including delete, escalate
