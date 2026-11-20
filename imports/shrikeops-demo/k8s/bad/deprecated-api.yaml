@@ -1,0 +1,46 @@
+# ⚠️  INTENTIONALLY MISCONFIGURED — for ShrikeOps demo
+# Expected scan result: score ~51, grade D
+# Findings: deprecated API versions (CRITICAL via Pluto),
+#           no PodDisruptionBudget (HIGH), missing labels (MEDIUM)
+
+# CRITICAL: extensions/v1beta1 Ingress was removed in k8s 1.22
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: legacy-ingress
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  rules:
+    - host: app.example.com
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: my-service
+              servicePort: 80
+---
+# CRITICAL: apps/v1beta1 Deployment was removed in k8s 1.16
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: legacy-deployment
+  namespace: default
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: legacy-app
+    spec:
+      containers:
+        - name: app
+          image: legacy-app:v1.0.0
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"

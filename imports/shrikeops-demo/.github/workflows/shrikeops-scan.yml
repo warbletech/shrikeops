@@ -1,0 +1,119 @@
+name: ShrikeOps Security Scan
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "k8s/**"
+      - "*.yaml"
+      - "*.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "k8s/**"
+      - "*.yaml"
+      - "*.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  ShrikeOps-scan:
+    name: Scan Kubernetes Manifests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Helm (for chart rendering)
+        uses: azure/setup-helm@v4
+        with:
+          version: "3.14.0"
+
+      - name: Scan all manifests via ShrikeOps
+        id: scan
+        env:
+          SHRIKE_API: https://warblecloud.com/api/kestrel-scan
+        run: |
+          set -euo pipefail
+
+          PASS=0
+          FAIL=0
+          RESULTS_DIR=$(mktemp -d)
+          SUMMARY_FILE="$RESULTS_DIR/summary.md"
+
+          echo "## 🦅 ShrikeOps Scan Results" >> "$SUMMARY_FILE"
+          echo "" >> "$SUMMARY_FILE"
+          echo "| File | Score | Grade | Critical | High | Status |" >> "$SUMMARY_FILE"
+          echo "|------|-------|-------|----------|------|--------|" >> "$SUMMARY_FILE"
+
+          # Scan all raw YAML files
+          find k8s/good k8s/bad -name "*.yaml" | sort | while read -r f; do
+            echo "::group::Scanning $f"
+
+            MANIFEST=$(cat "$f")
+            RESPONSE=$(curl -sf -X POST "$SHRIKE_API" \
+              -H "Content-Type: application/json" \
+              -d "{\"manifest\": $(echo "$MANIFEST" | jq -Rs .), \"source\": \"$f\"}" \
+              --max-time 30) || { echo "::warning::Scan failed for $f"; continue; }
+
+            SCORE=$(echo "$RESPONSE" | jq -r '.score // 0')
+            GRADE=$(echo "$RESPONSE" | jq -r '.grade // "?"')
+            CRIT=$(echo "$RESPONSE"  | jq -r '.summary.critical // 0')
+            HIGH=$(echo "$RESPONSE"  | jq -r '.summary.high // 0')
+
+            if [ "$CRIT" -gt 0 ]; then STATUS="❌ FAIL"; else STATUS="✅ PASS"; fi
+
+            echo "| \`$f\` | $SCORE | $GRADE | $CRIT | $HIGH | $STATUS |" >> "$SUMMARY_FILE"
+
+            # Print findings inline
+            echo "$RESPONSE" | jq -r '.findings[] | "  [\(.severity)] \(.rule): \(.message)"' || true
+            echo "::endgroup::"
+          done
+
+          # Scan rendered Helm chart
+          echo "::group::Scanning Helm chart (k8s/helm)"
+          HELM_YAML=$(helm template demo-app k8s/helm --namespace production 2>/dev/null)
+          RESPONSE=$(curl -sf -X POST "$SHRIKE_API" \
+            -H "Content-Type: application/json" \
+            -d "{\"manifest\": $(echo "$HELM_YAML" | jq -Rs .), \"source\": \"k8s/helm (rendered)\"}" \
+            --max-time 30) || echo "{}"
+
+          SCORE=$(echo "$RESPONSE" | jq -r '.score // 0')
+          GRADE=$(echo "$RESPONSE" | jq -r '.grade // "?"')
+          CRIT=$(echo "$RESPONSE"  | jq -r '.summary.critical // 0')
+          HIGH=$(echo "$RESPONSE"  | jq -r '.summary.high // 0')
+          STATUS="✅ PASS"; [ "$CRIT" -gt 0 ] && STATUS="❌ FAIL"
+
+          echo "| \`k8s/helm (rendered)\` | $SCORE | $GRADE | $CRIT | $HIGH | $STATUS |" >> "$SUMMARY_FILE"
+          echo "::endgroup::"
+
+          cat "$SUMMARY_FILE" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Enforce score gate on good manifests
+        env:
+          SHRIKE_API: https://warblecloud.com/api/kestrel-scan
+        run: |
+          # Good manifests must score >= 80
+          for f in k8s/good/*.yaml; do
+            RESPONSE=$(curl -sf -X POST "$SHRIKE_API" \
+              -H "Content-Type: application/json" \
+              -d "{\"manifest\": $(cat "$f" | jq -Rs .), \"source\": \"$f\"}" \
+              --max-time 30) || continue
+
+            SCORE=$(echo "$RESPONSE" | jq -r '.score // 0')
+            CRIT=$(echo "$RESPONSE"  | jq -r '.summary.critical // 0')
+
+            if [ "$CRIT" -gt 0 ]; then
+              echo "::error file=$f::ShrikeOps found CRITICAL findings in $f (score: $SCORE)"
+              exit 1
+            fi
+
+            if [ "$SCORE" -lt 80 ]; then
+              echo "::error file=$f::$f scored $SCORE (minimum: 80). Fix findings before merging."
+              exit 1
+            fi
+
+            echo "✅ $f passed: score=$SCORE"
+          done

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ShrikeOps Demo</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/asciinema-player@3.7.0/dist/bundle/asciinema-player.min.css"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0a0e1a;
+    color: #e2e8f0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 16px 60px;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 32px;
+    text-align: center;
+    flex-direction: column;
+  }
+  header h1 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    background: linear-gradient(90deg, #38bdf8, #818cf8);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+  header p {
+    color: #64748b;
+    font-size: 0.9rem;
+    margin-top: 4px;
+  }
+  .badge-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 28px;
+  }
+  .badge-row a img { border-radius: 4px; }
+  .player-wrap {
+    width: 100%;
+    max-width: 900px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #1e2d45;
+    box-shadow: 0 24px 80px rgba(0,0,0,.6);
+  }
+  .cta-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 32px;
+  }
+  .cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 22px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: opacity 0.15s;
+  }
+  .cta:hover { opacity: 0.85; }
+  .cta-primary { background: #3b82f6; color: #fff; }
+  .cta-secondary {
+    background: transparent;
+    border: 1px solid #1e2d45;
+    color: #94a3b8;
+  }
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    max-width: 900px;
+    width: 100%;
+    margin-top: 40px;
+  }
+  .step {
+    background: #0d1320;
+    border: 1px solid #1e2d45;
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .step-num {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #3b82f6;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+  .step h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 6px; }
+  .step code {
+    display: block;
+    margin-top: 10px;
+    font-size: 0.75rem;
+    color: #7dd3fc;
+    background: #080c14;
+    border: 1px solid #1e2d45;
+    border-radius: 6px;
+    padding: 8px 10px;
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .step p { font-size: 0.82rem; color: #64748b; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<header>
+  <div style="font-size:2.4rem">🦅</div>
+  <h1>ShrikeOps — Kubernetes Security Scanner</h1>
+  <p>Polaris · kube-score · Pluto · OPA · GitHub PR Checks · Scored Reports</p>
+</header>
+
+<div class="badge-row">
+  <a href="https://warbleoss.org"><img src="https://img.shields.io/badge/ShrikeOps-Try%20Free-00c853?style=flat-square&logo=kubernetes" alt="Try ShrikeOps"/></a>
+  <a href="https://github.com/avinashetrx/ShrikeOps-demo"><img src="https://img.shields.io/badge/GitHub-Demo%20Repo-181717?style=flat-square&logo=github" alt="Demo Repo"/></a>
+  <a href="https://github.com/warbletech/shrikeops"><img src="https://img.shields.io/badge/GitHub%20Checks-Enable-0076D6?style=flat-square&logo=githubactions" alt="GitHub Checks"/></a>
+</div>
+
+<div class="player-wrap" id="player"></div>
+
+<div class="cta-row">
+  <a href="https://warbleoss.org" class="cta cta-primary">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    Try the Scanner
+  </a>
+  <a href="https://github.com/avinashetrx/ShrikeOps-demo" class="cta cta-secondary">
+    <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+    View on GitHub
+  </a>
+  <a href="https://github.com/warbletech/shrikeops" class="cta cta-secondary">
+    ⚡ Enable PR Checks
+  </a>
+</div>
+
+<div class="steps">
+  <div class="step">
+    <div class="step-num">Step 1</div>
+    <h3>Scan any YAML</h3>
+    <p>Point ShrikeOps at any Kubernetes manifest or Helm chart.</p>
+    <code>./scripts/scan.sh k8s/good/deployment.yaml</code>
+  </div>
+  <div class="step">
+    <div class="step-num">Step 2</div>
+    <h3>Scan Helm charts</h3>
+    <p>Renders your chart and scans the full output in one pass.</p>
+    <code>./scripts/scan-helm.sh k8s/helm</code>
+  </div>
+  <div class="step">
+    <div class="step-num">Step 3</div>
+    <h3>Scan live clusters</h3>
+    <p>Export running workloads from GKE or EKS and audit them.</p>
+    <code>./scripts/scan-gke.sh \
+  --project my-project \
+  --cluster my-cluster \
+  --region us-central1</code>
+  </div>
+  <div class="step">
+    <div class="step-num">Step 4</div>
+    <h3>GitHub PR Checks</h3>
+    <p>Auto-scan every PR. Block merges on critical findings.</p>
+    <code>warblecloud.com/kestrel/github</code>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/asciinema-player@3.7.0/dist/bundle/asciinema-player.min.js"></script>
+<script>
+  AsciinemaPlayer.create('./ShrikeOps-demo.cast', document.getElementById('player'), {
+    cols: 100,
+    rows: 28,
+    autoPlay: true,
+    loop: true,
+    speed: 1.2,
+    theme: 'monokai',
+    fit: 'width',
+    terminalFontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
+    terminalFontSize: '13px',
+    poster: 'npt:1.8'
+  });
+</script>
+
+</body>
+</html>

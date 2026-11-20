@@ -1,0 +1,19 @@
+# Exported cluster manifests (may contain sensitive data)
+*-exported.yaml
+*-live.yaml
+/tmp/
+
+# Local scan reports (keep viewer, not data files)
+reports/*.json
+!reports/viewer.html
+
+# kubeconfig
+kubeconfig
+.kubeconfig
+*.kubeconfig
+
+# Credentials
+*.pem
+*.key
+*.p12
+service-account.json

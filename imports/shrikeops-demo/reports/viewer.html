@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ShrikeOps Report Viewer</title>
+<style>
+  :root {
+    --bg: #0a0e1a; --surface: #0d1320; --border: #1e2d45;
+    --text: #e2e8f0; --muted: #64748b; --accent: #3b82f6;
+    --crit: #ef4444; --high: #f97316; --med: #eab308;
+    --low: #22c55e; --pass: #10b981;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg); color: var(--text); min-height: 100vh; }
+  header { background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 16px 24px; display: flex; align-items: center; gap: 12px; }
+  header h1 { font-size: 1.1rem; font-weight: 700; }
+  header span { font-size: 0.75rem; color: var(--muted); }
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+
+  /* Drop zone */
+  #drop-zone { border: 2px dashed var(--border); border-radius: 16px;
+    padding: 60px 24px; text-align: center; cursor: pointer;
+    transition: border-color 0.2s; margin-bottom: 24px; }
+  #drop-zone:hover, #drop-zone.drag-over { border-color: var(--accent); }
+  #drop-zone p { color: var(--muted); margin-top: 8px; font-size: 0.9rem; }
+  #drop-zone input { display: none; }
+
+  /* Score ring */
+  .score-section { display: flex; align-items: center; gap: 32px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 24px; margin-bottom: 20px; }
+  .score-ring { position: relative; width: 110px; height: 110px; flex-shrink: 0; }
+  .score-ring svg { transform: rotate(-90deg); }
+  .score-ring .score-num { position: absolute; inset: 0; display: flex;
+    flex-direction: column; align-items: center; justify-content: center; }
+  .score-ring .score-num span:first-child { font-size: 2rem; font-weight: 800; }
+  .score-ring .score-num span:last-child { font-size: 0.7rem; color: var(--muted); }
+  .score-meta h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 4px; }
+  .score-meta p { font-size: 0.85rem; color: var(--muted); }
+  .pills { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .pill { padding: 4px 12px; border-radius: 999px; font-size: 0.78rem;
+    font-weight: 600; border: 1px solid; }
+  .pill-crit { color: var(--crit); border-color: var(--crit); background: rgba(239,68,68,.1); }
+  .pill-high { color: var(--high); border-color: var(--high); background: rgba(249,115,22,.1); }
+  .pill-med  { color: var(--med);  border-color: var(--med);  background: rgba(234,179,8,.1); }
+  .pill-low  { color: var(--low);  border-color: var(--low);  background: rgba(34,197,94,.1); }
+  .pill-pass { color: var(--pass); border-color: var(--pass); background: rgba(16,185,129,.1); }
+
+  /* Filters */
+  .filters { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .filter-btn { padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--muted); font-size: 0.8rem;
+    cursor: pointer; transition: all 0.15s; }
+  .filter-btn:hover, .filter-btn.active { border-color: var(--accent);
+    color: var(--accent); background: rgba(59,130,246,.1); }
+
+  /* Findings */
+  .finding { background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px; margin-bottom: 10px;
+    border-left: 3px solid var(--border); }
+  .finding.CRITICAL { border-left-color: var(--crit); }
+  .finding.HIGH     { border-left-color: var(--high); }
+  .finding.MEDIUM   { border-left-color: var(--med);  }
+  .finding.LOW      { border-left-color: var(--low);  }
+  .finding-header { display: flex; align-items: center; gap: 10px;
+    margin-bottom: 6px; flex-wrap: wrap; }
+  .sev-badge { padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;
+    font-weight: 700; letter-spacing: 0.05em; }
+  .sev-CRITICAL { background: rgba(239,68,68,.2); color: var(--crit); }
+  .sev-HIGH     { background: rgba(249,115,22,.2); color: var(--high); }
+  .sev-MEDIUM   { background: rgba(234,179,8,.2);  color: var(--med);  }
+  .sev-LOW      { background: rgba(34,197,94,.2);  color: var(--low);  }
+  .finding-rule { font-weight: 600; font-size: 0.9rem; }
+  .finding-tool { font-size: 0.72rem; color: var(--muted); margin-left: auto;
+    border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; }
+  .finding-msg { color: #94a3b8; font-size: 0.85rem; margin-bottom: 6px; }
+  .finding-fix { font-size: 0.82rem; color: #60a5fa; }
+  .finding-fix::before { content: "💡 Fix: "; font-weight: 600; }
+  .finding-resource { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+  .finding-resource code { background: rgba(255,255,255,.05); padding: 1px 5px;
+    border-radius: 3px; font-size: 0.78rem; }
+
+  /* Empty state */
+  #empty { text-align: center; padding: 60px 0; color: var(--muted); display: none; }
+  #results { display: none; }
+
+  /* Scan ID bar */
+  .meta-bar { background: rgba(59,130,246,.05); border: 1px solid rgba(59,130,246,.15);
+    border-radius: 8px; padding: 8px 14px; font-size: 0.78rem; color: var(--muted);
+    margin-bottom: 20px; display: flex; gap: 20px; flex-wrap: wrap; }
+  .meta-bar span b { color: var(--text); }
+
+  a.cta { display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 8px; background: var(--accent);
+    color: #fff; font-size: 0.82rem; font-weight: 600;
+    text-decoration: none; margin-top: 16px; }
+</style>
+</head>
+<body>
+
+<header>
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+  </svg>
+  <div>
+    <h1>🦅 ShrikeOps Report Viewer</h1>
+    <span>Drag &amp; drop a scan JSON report · or paste JSON below · or scan live at <a href="https://warbleoss.org" target="_blank" style="color:#3b82f6">warblecloud.com/kestrel</a></span>
+  </div>
+</header>
+
+<div class="container">
+
+  <div id="drop-zone" onclick="document.getElementById('file-input').click()">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="1.5" style="margin:0 auto 12px">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+    </svg>
+    <p><strong style="color:#e2e8f0">Drop a ShrikeOps JSON report here</strong></p>
+    <p>or click to browse · or paste JSON and hit Scan</p>
+    <input type="file" id="file-input" accept=".json,application/json" />
+    <br/><br/>
+    <textarea id="paste-area" rows="4" placeholder='Paste JSON here: {"scan_id":"kop-...","score":82,...}'
+      style="width:100%;max-width:600px;background:#0d1320;border:1px solid #1e2d45;border-radius:8px;padding:10px;color:#e2e8f0;font-family:monospace;font-size:0.8rem;resize:vertical"
+      onclick="event.stopPropagation()"></textarea>
+    <br/>
+    <button onclick="event.stopPropagation();parsePaste()" style="margin-top:8px;padding:8px 20px;background:#3b82f6;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">
+      Load Report
+    </button>
+  </div>
+
+  <div id="results">
+    <div class="score-section">
+      <div class="score-ring">
+        <svg width="110" height="110" viewBox="0 0 110 110">
+          <circle cx="55" cy="55" r="48" fill="none" stroke="#1e2d45" stroke-width="10"/>
+          <circle id="ring-circle" cx="55" cy="55" r="48" fill="none" stroke="#3b82f6"
+            stroke-width="10" stroke-linecap="round" stroke-dasharray="301.6" stroke-dashoffset="301.6"/>
+        </svg>
+        <div class="score-num">
+          <span id="score-num">—</span>
+          <span id="grade-label">grade</span>
+        </div>
+      </div>
+      <div class="score-meta">
+        <h2 id="source-label">Scan Report</h2>
+        <p id="scan-id-label" style="font-size:0.78rem;color:#64748b"></p>
+        <div class="pills" id="pills"></div>
+        <a class="cta" href="https://warbleoss.org" target="_blank">
+          ↗ Scan Another Manifest
+        </a>
+      </div>
+    </div>
+
+    <div class="meta-bar" id="meta-bar"></div>
+
+    <div class="filters" id="filters"></div>
+
+    <div id="findings-list"></div>
+    <div id="empty">No findings match the selected filter.</div>
+  </div>
+
+</div>
+
+<script>
+let allFindings = [];
+let activeFilter = 'ALL';
+
+// Drop zone
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) readFile(file);
+});
+document.getElementById('file-input').addEventListener('change', e => {
+  if (e.target.files[0]) readFile(e.target.files[0]);
+});
+
+function readFile(file) {
+  const r = new FileReader();
+  r.onload = e => render(JSON.parse(e.target.result));
+  r.readAsText(file);
+}
+
+function parsePaste() {
+  const txt = document.getElementById('paste-area').value.trim();
+  if (!txt) return;
+  try { render(JSON.parse(txt)); } catch(e) { alert('Invalid JSON: ' + e.message); }
+}
+
+function gradeColor(g) {
+  if (!g) return '#64748b';
+  if (g.startsWith('A')) return '#10b981';
+  if (g.startsWith('B')) return '#22c55e';
+  if (g.startsWith('C')) return '#eab308';
+  if (g.startsWith('D')) return '#f97316';
+  return '#ef4444';
+}
+
+function render(data) {
+  allFindings = data.findings || [];
+  document.getElementById('drop-zone').style.display = 'none';
+  document.getElementById('results').style.display = 'block';
+
+  // Score ring
+  const score = data.score || 0;
+  const circ = 301.6;
+  document.getElementById('ring-circle').style.strokeDashoffset = circ - (circ * score / 100);
+  document.getElementById('ring-circle').style.stroke = gradeColor(data.grade);
+  document.getElementById('score-num').textContent = score;
+  document.getElementById('score-num').style.color = gradeColor(data.grade);
+  document.getElementById('grade-label').textContent = data.grade || '—';
+  document.getElementById('source-label').textContent = data.source || 'Scan Report';
+  document.getElementById('scan-id-label').textContent = data.scan_id || '';
+
+  // Pills
+  const s = data.summary || {};
+  document.getElementById('pills').innerHTML = [
+    ['CRIT', 'crit',  s.critical || 0],
+    ['HIGH', 'high',  s.high     || 0],
+    ['MED',  'med',   s.medium   || 0],
+    ['LOW',  'low',   s.low      || 0],
+    ['PASS', 'pass',  s.passed   || 0],
+  ].map(([l,c,n]) => `<span class="pill pill-${c}">${l}: ${n}</span>`).join('');
+
+  // Meta bar
+  document.getElementById('meta-bar').innerHTML = [
+    `<span>Scan ID: <b>${data.scan_id || '—'}</b></span>`,
+    `<span>Created: <b>${data.created_at || '—'}</b></span>`,
+    `<span>Findings: <b>${allFindings.length}</b></span>`,
+    `<span>Source: <b>${data.source || '—'}</b></span>`,
+  ].join('');
+
+  // Filters
+  const sevs = ['ALL', ...new Set(allFindings.map(f => f.severity).filter(Boolean))];
+  document.getElementById('filters').innerHTML = sevs.map(s =>
+    `<button class="filter-btn ${s === 'ALL' ? 'active' : ''}" onclick="setFilter('${s}')">${s} ${s === 'ALL' ? allFindings.length : allFindings.filter(f=>f.severity===s).length}</button>`
+  ).join('');
+
+  renderFindings();
+}
+
+function setFilter(f) {
+  activeFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.textContent.startsWith(f)));
+  renderFindings();
+}
+
+function renderFindings() {
+  const list = activeFilter === 'ALL' ? allFindings : allFindings.filter(f => f.severity === activeFilter);
+  const el = document.getElementById('findings-list');
+  const empty = document.getElementById('empty');
+
+  if (list.length === 0) { el.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+
+  const sevOrder = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+  const sorted = [...list].sort((a,b) => (sevOrder[a.severity]||9) - (sevOrder[b.severity]||9));
+
+  el.innerHTML = sorted.map(f => `
+    <div class="finding ${f.severity || ''}">
+      <div class="finding-header">
+        <span class="sev-badge sev-${f.severity}">${f.severity}</span>
+        <span class="finding-rule">${f.rule || '—'}</span>
+        <span class="finding-tool">${f.tool || 'shrikeops'}</span>
+      </div>
+      <div class="finding-msg">${f.message || ''}</div>
+      ${f.remediation ? `<div class="finding-fix">${f.remediation}</div>` : ''}
+      ${f.resource ? `<div class="finding-resource">Resource: <code>${f.resource}</code>${f.line ? ` · line ${f.line}` : ''}</div>` : ''}
+    </div>
+  `).join('');
+}
+</script>
+</body>
+</html>
