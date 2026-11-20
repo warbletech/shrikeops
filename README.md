@@ -221,3 +221,7 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 ## License
 
 Apache-2.0 © Warble Cloud / ChirpStack LLP
+
+## Imported: `shrikeops-demo`
+
+The history of the public repo [`warbletech/shrikeops-demo`](https://github.com/warbletech/shrikeops-demo) is imported under [`imports/shrikeops-demo/`](imports/shrikeops-demo/) via `git subtree add` (history preserved, no squash). It is the public demo (k8s, demo scripts, docs, reports) of this Helm safety gate. Extra source branches were not imported: `docs/local-binary-scan`, `docs/warbletech-remaining`, `docs/warbletech-rename`, `feat/evaluator-broken-workloads`, `feat/evaluator-broken-workloads-more`. This PR does not archive the source.
